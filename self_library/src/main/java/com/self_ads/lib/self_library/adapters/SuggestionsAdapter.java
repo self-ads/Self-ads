@@ -29,8 +29,6 @@ public class SuggestionsAdapter extends ArrayAdapter<Suggestion> {
     Context context;
     int layoutResourceId;
     List<Suggestion> data = new ArrayList<Suggestion>();
-
-
     public SuggestionsAdapter(Context context, int layoutResourceId, List<Suggestion> data)
     {
         super(context, layoutResourceId, data);
