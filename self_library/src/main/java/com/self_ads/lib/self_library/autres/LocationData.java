@@ -29,12 +29,13 @@ import static android.content.Context.LOCATION_SERVICE;
 public class LocationData {
     Context context;
     String myJSON;
-        String country , langue,pack;
+    String country , langue;
+    int id_ads;
 
     private static final String TAG_Country = "country";
-    public LocationData(Context context,String pack) {
+    public LocationData(Context context,int id_ads) {
         this.context = context;
-        this.pack=pack;
+        this.id_ads=id_ads;
     }
 
     public void startSearch() {
@@ -83,7 +84,7 @@ public  void getData(){
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap<String, String>();
-                MyData.put("package", pack);
+                MyData.put("id_ads", String.valueOf(id_ads));
                 MyData.put("country", country);
                 MyData.put("langue", langue);
                 return MyData;

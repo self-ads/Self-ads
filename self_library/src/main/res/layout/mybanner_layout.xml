@@ -3,10 +3,5 @@
      android:id="@+id/icon" android:layout_width="match_parent"
     android:layout_height="@dimen/banner_size">
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@drawable/favicon"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"/>
+       
 </RelativeLayout>

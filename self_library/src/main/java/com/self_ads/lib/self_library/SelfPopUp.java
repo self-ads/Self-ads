@@ -25,6 +25,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.self_ads.lib.self_library.autres.LocationData;
 import com.self_ads.lib.self_library.configuration.General;
+import com.self_ads.lib.self_library.models.OneADS;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -45,24 +46,30 @@ public class SelfPopUp extends RelativeLayout {
     PopupWindow pw;
     String myJSON;
     private static final String TAG_RESULTS = "PopUp";
+    private static final String TAG_ID = "id";
     private static final String TAG_IMAGE = "image";
+    private static final String TAG_LINK = "link";
     private static final String TAG_PACKAGE = "package";
+
     JSONArray myPopup = null;
-    String PATH, DESTINATION;
+    OneADS oneADS;
     String key;
     private Bitmap bmp;
-    RelativeLayout icon;
+    ImageView icon;
     Dialog dialog;
     public SelfPopUp(Context context) {
         super(context);
         this.context=context;
+        oneADS=new OneADS();
         mInflater = LayoutInflater.from(context);
     }
 
-    public SelfPopUp(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        this.context=context;
+    public SelfPopUp(Context context1, AttributeSet attrs) {
+        super(context1, attrs);
+        this.context=context1;
         mInflater = LayoutInflater.from(context);
+        // custom dialog
+
     }
 
     public void setKey(String key) {
@@ -70,7 +77,6 @@ public class SelfPopUp extends RelativeLayout {
     }
 
     public void initiatePopupWindow() {
-        // custom dialog
         dialog= new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.mypop_layout);
@@ -84,19 +90,35 @@ public class SelfPopUp extends RelativeLayout {
                 dialog.dismiss();
             }
         });
-        icon=(RelativeLayout) dialog.findViewById(R.id.image);
+        icon=(ImageView) dialog.findViewById(R.id.image);
         icon.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(DESTINATION!=null){
-                    try {
-                        getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + DESTINATION)));
-                    } catch (android.content.ActivityNotFoundException anfe) {
-                        getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + DESTINATION)));
+                if(oneADS!=null && oneADS.getLink()!=null){
+                    if(oneADS.getMyPackage()){
+                        try {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + oneADS.getLink())));
+                        } catch (android.content.ActivityNotFoundException anfe) {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + oneADS.getLink())));
+                        }
+                        LocationData locationData=new LocationData(getContext(),oneADS.getId());
+                        locationData.startSearch();
+                        dialog.dismiss();
+                    }else{
+                        try {
+                            if (!oneADS.getLink().contains("http")) {
+                                oneADS.setLink("http://" + oneADS.getLink());
+                            }
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(oneADS.getLink()));
+                            context.startActivity(browserIntent);
+                            LocationData locationData = new LocationData(getContext(), oneADS.getId());
+                            locationData.startSearch();
+                            dialog.dismiss();
+                        }catch(Exception e){
+
+                        }
                     }
-                    LocationData locationData=new LocationData(getContext(),DESTINATION);
-                    locationData.startSearch();
-                    dialog.dismiss();
+
                 }
 
             }
@@ -106,8 +128,10 @@ public class SelfPopUp extends RelativeLayout {
             myPopup = jsonObj.getJSONArray(TAG_RESULTS);
             if(!myPopup.isNull(0)){
                 JSONObject c = myPopup.getJSONObject(0);
-                PATH = General.serveur + c.getString(TAG_IMAGE);
-                DESTINATION = c.getString(TAG_PACKAGE);
+                oneADS.setImage(General.serveur + c.getString(TAG_IMAGE));
+                oneADS.setId(c.getInt(TAG_ID));
+                oneADS.setLink(c.getString(TAG_LINK));
+                oneADS.setMyPackage(c.getInt(TAG_PACKAGE)==1?true:false);
             }
 
         } catch (JSONException e) {
@@ -118,8 +142,8 @@ public class SelfPopUp extends RelativeLayout {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    if(PATH!=null){
-                        InputStream in = new URL(PATH).openStream();
+                    if(oneADS!=null && oneADS.getImage()!=null){
+                        InputStream in = new URL(oneADS.getImage()).openStream();
                         bmp = BitmapFactory.decodeStream(in);
                     }else{
                         bmp=null;

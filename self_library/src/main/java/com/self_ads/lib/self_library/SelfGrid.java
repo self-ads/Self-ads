@@ -42,9 +42,10 @@ public class SelfGrid extends RelativeLayout {
     String key;
     String myJSON;
     private static final String TAG_RESULTS = "Grid";
-    private static final String TAG_ICON= "icon";
+    private static final String TAG_IMAGE= "image";
     private static final String TAG_TITILE= "title";
-    private static final String TAG_DESC= "desc";
+    private static final String TAG_ID= "id";
+    private static final String TAG_LINK = "link";
     private static final String TAG_PACKAGE = "package";
     JSONArray myGrid = null;
     List<Suggestion> suggestions;
@@ -97,10 +98,11 @@ public class SelfGrid extends RelativeLayout {
                 for(int i=0;i<myGrid.length();i++){
                     Suggestion suggestion=new Suggestion();
                     JSONObject c = myGrid.getJSONObject(i);
-                    suggestion.setImage(c.getString(TAG_ICON));
+                    suggestion.setImage(c.getString(TAG_IMAGE));
                     suggestion.setTitle(c.getString(TAG_TITILE));
-                    suggestion.setDesc(c.getString(TAG_DESC));
-                    suggestion.setPack(c.getString(TAG_PACKAGE));
+                    suggestion.setLink(c.getString(TAG_LINK));
+                    suggestion.setId(c.getInt(TAG_ID));
+                    suggestion.setMyPackage(c.getInt(TAG_PACKAGE)==1?true:false);
                     suggestions.add(suggestion);
                 }
             remplir();
@@ -116,13 +118,28 @@ public class SelfGrid extends RelativeLayout {
             public void onItemClick(AdapterView<?> parent, View v,
                                     int position, long id) {
                 Suggestion suggestion=suggestions.get(position);
-                try {
-                    getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + suggestion.getPack())));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + suggestion.getPack())));
+                if(suggestion.getMyPackage()){
+                    try {
+                        context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + suggestion.getLink())));
+                    } catch (android.content.ActivityNotFoundException anfe) {
+                        context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + suggestion.getLink())));
+                    }
+                    LocationData locationData=new LocationData(getContext(),suggestion.getId());
+                    locationData.startSearch();
+                }else{
+                    try {
+                        if (!suggestion.getLink().contains("http")) {
+                            suggestion.setLink("http://" + suggestion.getLink());
+                        }
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(suggestion.getLink()));
+                        context.startActivity(browserIntent);
+                        LocationData locationData = new LocationData(getContext(), suggestion.getId());
+                        locationData.startSearch();
+                    }catch(Exception e){
+
+                    }
                 }
-                LocationData locationData=new LocationData(getContext(),suggestion.getPack());
-                locationData.startSearch();
+
 
             }
         });

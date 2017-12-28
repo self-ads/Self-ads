@@ -22,6 +22,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.self_ads.lib.self_library.autres.LocationData;
 import com.self_ads.lib.self_library.configuration.General;
+import com.self_ads.lib.self_library.models.OneADS;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,10 +45,12 @@ public class SelfBanner extends RelativeLayout {
     RelativeLayout icon;
     String myJSON;
     private static final String TAG_RESULTS = "Banner";
+    private static final String TAG_ID = "id";
     private static final String TAG_IMAGE = "image";
+    private static final String TAG_LINK = "link";
     private static final String TAG_PACKAGE = "package";
     JSONArray myBanner = null;
-    String PATH, DESTINATION;
+    OneADS oneADS;
     private Bitmap bmp;
 
     public SelfBanner(Context context) {
@@ -73,21 +76,37 @@ public class SelfBanner extends RelativeLayout {
         this.key = key;
     }
 
-    public void init(Context context) {
-        this.context = context;
+    public void init(Context context1) {
+        this.context = context1;
+        oneADS=new OneADS();
         view = mInflater.inflate(R.layout.mybanner_layout, this, true);
         icon = (RelativeLayout) view.findViewById(R.id.icon);
         icon.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(DESTINATION!=null){
-                    try {
-                        getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + DESTINATION)));
-                    } catch (android.content.ActivityNotFoundException anfe) {
-                        getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + DESTINATION)));
+                if(oneADS!=null && oneADS.getLink()!=null){
+                    if(oneADS.getMyPackage()){
+                        try {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + oneADS.getLink())));
+                        } catch (android.content.ActivityNotFoundException anfe) {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + oneADS.getLink())));
+                        }
+                        LocationData locationData=new LocationData(getContext(),oneADS.getId());
+                        locationData.startSearch();
+                    }else{
+                        try {
+                            if (!oneADS.getLink().contains("http")) {
+                                oneADS.setLink("http://" + oneADS.getLink());
+                            }
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(oneADS.getLink()));
+                            context.startActivity(browserIntent);
+                            LocationData locationData = new LocationData(getContext(), oneADS.getId());
+                            locationData.startSearch();
+                        }catch(Exception e){
+
+                        }
                     }
-                    LocationData locationData=new LocationData(getContext(),DESTINATION);
-                    locationData.startSearch();
+
                 }
 
 
@@ -104,11 +123,12 @@ public class SelfBanner extends RelativeLayout {
             myBanner = jsonObj.getJSONArray(TAG_RESULTS);
             if(!myBanner.isNull(0)){
                 JSONObject c = myBanner.getJSONObject(0);
-                PATH = General.serveur + c.getString(TAG_IMAGE);
-                DESTINATION = c.getString(TAG_PACKAGE);
+                oneADS.setImage(General.serveur + c.getString(TAG_IMAGE));
+               oneADS.setLink(c.getString(TAG_LINK));
+                oneADS.setId(c.getInt(TAG_ID));
+                oneADS.setMyPackage(c.getInt(TAG_PACKAGE)==1?true:false);
             }else{
-                PATH = null;
-                DESTINATION = null;
+                oneADS=null;
             }
 
         } catch (JSONException e) {
@@ -120,8 +140,8 @@ public class SelfBanner extends RelativeLayout {
             @Override
             protected Void doInBackground(Void... params) {
                 try {
-                    if(PATH!=null){
-                        InputStream in = new URL(PATH).openStream();
+                    if(oneADS!=null && oneADS.getImage()!=null){
+                        InputStream in = new URL(oneADS.getImage()).openStream();
                         bmp = BitmapFactory.decodeStream(in);
                     }else{
                         bmp=null;

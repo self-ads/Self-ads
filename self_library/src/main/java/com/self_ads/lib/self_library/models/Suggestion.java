@@ -5,10 +5,19 @@ package com.self_ads.lib.self_library.models;
  */
 
 public class Suggestion {
+    private int id;
     private String title;
-    private String desc;
     private String image;
-    private String pack;
+    private String link;
+    private Boolean myPackage;
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;
@@ -16,22 +25,6 @@ public class Suggestion {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getPack() {
-        return pack;
-    }
-
-    public void setPack(String pack) {
-        this.pack = pack;
-    }
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
     }
 
     public String getImage() {
@@ -42,13 +35,19 @@ public class Suggestion {
         this.image = image;
     }
 
-    @Override
-    public String toString() {
-        return "Suggestion{" +
-                "title='" + title + '\'' +
-                ", desc='" + desc + '\'' +
-                ", image='" + image + '\'' +
-                ", pack='" + pack + '\'' +
-                '}';
+    public String getLink() {
+        return link;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+
+    public Boolean getMyPackage() {
+        return myPackage;
+    }
+
+    public void setMyPackage(Boolean myPackage) {
+        this.myPackage = myPackage;
     }
 }

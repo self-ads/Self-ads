@@ -47,9 +47,10 @@ public class SelfList extends RelativeLayout{
     String key;
     String myJSON;
     private static final String TAG_RESULTS = "Listes";
-    private static final String TAG_ICON= "icon";
+    private static final String TAG_IMAGE= "image";
     private static final String TAG_TITILE= "title";
-    private static final String TAG_DESC= "desc";
+    private static final String TAG_ID= "id";
+    private static final String TAG_LINK = "link";
     private static final String TAG_PACKAGE = "package";
     JSONArray myList = null;
     List<Suggestion> suggestions;
@@ -99,10 +100,11 @@ public class SelfList extends RelativeLayout{
             for(int i=0;i<myList.length();i++){
                 Suggestion suggestion=new Suggestion();
                 JSONObject c = myList.getJSONObject(i);
-                suggestion.setImage(c.getString(TAG_ICON));
+                suggestion.setImage(c.getString(TAG_IMAGE));
                 suggestion.setTitle(c.getString(TAG_TITILE));
-                suggestion.setDesc(c.getString(TAG_DESC));
-                suggestion.setPack(c.getString(TAG_PACKAGE));
+                suggestion.setId(c.getInt(TAG_ID));
+                suggestion.setMyPackage(c.getInt(TAG_PACKAGE)==1?true:false);
+                suggestion.setLink(c.getString(TAG_LINK));
                 suggestions.add(suggestion);
             }
             remplir();
@@ -134,14 +136,28 @@ public class SelfList extends RelativeLayout{
                 public void onClick(View v)
                 {
                     // TODO Auto-generated method stub
-                    LocationData locationData=new LocationData(getContext(),suggestions.get((Integer) v.getTag()).getPack());
-                    locationData.startSearch();
-                    Log.e("Tag",""+imageView.getTag());
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="+suggestions.get((Integer) v.getTag()).getPack()));
-                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                    intent.addFlags(Intent.FLAG_FROM_BACKGROUND);
-                    getContext().startActivity(intent);
+                    Suggestion suggestion1=suggestions.get((Integer) v.getTag());
+                    if(suggestion1.getMyPackage()){
+                        try {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + suggestion1.getLink())));
+                        } catch (android.content.ActivityNotFoundException anfe) {
+                            context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + suggestion1.getLink())));
+                        }
+                        LocationData locationData=new LocationData(getContext(),suggestion1.getId());
+                        locationData.startSearch();
+                    }else{
+                        try {
+                            if (!suggestion1.getLink().contains("http")) {
+                                suggestion1.setLink("http://" + suggestion1.getLink());
+                            }
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(suggestion1.getLink()));
+                            context.startActivity(browserIntent);
+                            LocationData locationData = new LocationData(getContext(), suggestion1.getId());
+                            locationData.startSearch();
+                        }catch(Exception e){
+
+                        }
+                    }
 
                 }
             });
